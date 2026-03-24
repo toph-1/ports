@@ -1,0 +1,64 @@
+#!/bin/bash
+
+NETWORK="192.168.1.0/24"
+
+clear
+echo "=============================="
+echo "   Simple WiFi Scan Tool"
+echo "=============================="
+echo "1) Discover devices"
+echo "2) Scan ALL ports on network"
+echo "3) Scan common ports (fast)"
+echo "4) Scan single device"
+echo "5) Exit"
+echo "=============================="
+read -p "Choose an option: " choice
+
+case $choice in
+
+1)
+  echo "[*] Discovering devices..."
+  nmap -sn $NETWORK
+  ;;
+
+2)
+  echo "[*] Scanning ALL ports (this may take time)..."
+  hosts=$(nmap -sn $NETWORK | awk '/Nmap scan report/{print $NF}')
+  for ip in $hosts; do
+    echo "---- $ip ----"
+    sudo nmap -p- -sS --reason $ip
+  done
+  ;;
+
+3)
+  echo "[*] Scanning common ports (fast)..."
+  hosts=$(nmap -sn $NETWORK | awk '/Nmap scan report/{print $NF}')
+  for ip in $hosts; do
+    echo "---- $ip ----"
+    nmap -F $ip
+  done
+  ;;
+
+4)
+  read -p "Enter IP address: " ip
+  echo "1) Full scan"
+  echo "2) Fast scan"
+  read -p "Choose: " scan_type
+
+  if [ "$scan_type" == "1" ]; then
+    sudo nmap -p- -sS --reason $ip
+  else
+    nmap -F $ip
+  fi
+  ;;
+
+5)
+  echo "Goodbye!"
+  exit
+  ;;
+
+*)
+  echo "Invalid option"
+  ;;
+
+esac
