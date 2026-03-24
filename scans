@@ -1,64 +1,73 @@
 #!/bin/bash
 
-NETWORK="192.168.1.0/24"
-
 clear
+
+while true; do
 echo "=============================="
-echo "   Simple WiFi Scan Tool"
+echo "   🎮 PS5 NETWORK TOOL"
 echo "=============================="
-echo "1) Discover devices"
-echo "2) Scan ALL ports on network"
-echo "3) Scan common ports (fast)"
-echo "4) Scan single device"
+echo "1) Test Internet"
+echo "2) Test PSN Ports"
+echo "3) Show My IP"
+echo "4) Quick Full Test"
 echo "5) Exit"
 echo "=============================="
 read -p "Choose an option: " choice
 
 case $choice in
-
 1)
-  echo "[*] Discovering devices..."
-  nmap -sn $NETWORK
-  ;;
+echo -e "\n🌐 Testing internet..."
+ping -c 2 google.com >/dev/null 2>&1 && 
+echo "✔ Internet OK" || echo "✖ No Internet"
+;;
 
+```
 2)
-  echo "[*] Scanning ALL ports (this may take time)..."
-  hosts=$(nmap -sn $NETWORK | awk '/Nmap scan report/{print $NF}')
-  for ip in $hosts; do
-    echo "---- $ip ----"
-    sudo nmap -p- -sS --reason $ip
+  echo -e "\n🔌 Testing PSN ports..."
+  for PORT in 80 443 3478 3479 3480; do
+    nc -z -w 2 playstation.com $PORT >/dev/null 2>&1 && \
+      echo "✔ Port $PORT OK" || echo "✖ Port $PORT blocked"
   done
   ;;
 
 3)
-  echo "[*] Scanning common ports (fast)..."
-  hosts=$(nmap -sn $NETWORK | awk '/Nmap scan report/{print $NF}')
-  for ip in $hosts; do
-    echo "---- $ip ----"
-    nmap -F $ip
-  done
+  echo -e "\n🌍 Your Public IP:"
+  curl -s ifconfig.me
+  echo ""
   ;;
 
 4)
-  read -p "Enter IP address: " ip
-  echo "1) Full scan"
-  echo "2) Fast scan"
-  read -p "Choose: " scan_type
+  echo -e "\n🚀 Running full test..."
 
-  if [ "$scan_type" == "1" ]; then
-    sudo nmap -p- -sS --reason $ip
-  else
-    nmap -F $ip
-  fi
+  ping -c 2 google.com >/dev/null 2>&1 && \
+    echo "✔ Internet OK" || echo "✖ No Internet"
+
+  nslookup playstation.com >/dev/null 2>&1 && \
+    echo "✔ DNS OK" || echo "✖ DNS Issue"
+
+  for PORT in 80 443 3478 3479 3480; do
+    nc -z -w 2 playstation.com $PORT >/dev/null 2>&1 && \
+      echo "✔ Port $PORT OK" || echo "✖ Port $PORT blocked"
+  done
+
+  echo -e "\n🌍 Public IP:"
+  curl -s ifconfig.me
+  echo ""
   ;;
 
 5)
-  echo "Goodbye!"
-  exit
+  echo "Goodbye 👋"
+  exit 0
   ;;
 
 *)
   echo "Invalid option"
   ;;
+```
 
 esac
+
+echo -e "\nPress Enter to continue..."
+read
+clear
+done
