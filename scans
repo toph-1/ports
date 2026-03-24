@@ -2,72 +2,51 @@
 
 clear
 
-while true; do
-echo "=============================="
-echo "   🎮 PS5 NETWORK TOOL"
-echo "=============================="
-echo "1) Test Internet"
-echo "2) Test PSN Ports"
-echo "3) Show My IP"
-echo "4) Quick Full Test"
-echo "5) Exit"
-echo "=============================="
-read -p "Choose an option: " choice
+check_cmd() {
+command -v "$1" >/dev/null 2>&1
+}
 
-case $choice in
-1)
-echo -e "\n🌐 Testing internet..."
-ping -c 2 google.com >/dev/null 2>&1 && 
-echo "✔ Internet OK" || echo "✖ No Internet"
-;;
+echo "🎮 PS5 Network Tester"
+echo "====================="
 
-```
-2)
-  echo -e "\n🔌 Testing PSN ports..."
-  for PORT in 80 443 3478 3479 3480; do
-    nc -z -w 2 playstation.com $PORT >/dev/null 2>&1 && \
-      echo "✔ Port $PORT OK" || echo "✖ Port $PORT blocked"
-  done
-  ;;
+# 1. Internet test
 
-3)
-  echo -e "\n🌍 Your Public IP:"
-  curl -s ifconfig.me
-  echo ""
-  ;;
+echo -e "\n[1] Internet Test"
+if ping -c 1 google.com >/dev/null 2>&1; then
+echo "✔ Internet OK"
+else
+echo "✖ Internet NOT working"
+fi
 
-4)
-  echo -e "\n🚀 Running full test..."
+# 2. DNS test
 
-  ping -c 2 google.com >/dev/null 2>&1 && \
-    echo "✔ Internet OK" || echo "✖ No Internet"
+echo -e "\n[2] DNS Test"
+if check_cmd nslookup; then
+nslookup playstation.com >/dev/null 2>&1 && 
+echo "✔ DNS OK" || echo "✖ DNS issue"
+else
+echo "⚠ nslookup not installed (skipping)"
+fi
 
-  nslookup playstation.com >/dev/null 2>&1 && \
-    echo "✔ DNS OK" || echo "✖ DNS Issue"
+# 3. Port test (using bash only, no nc)
 
-  for PORT in 80 443 3478 3479 3480; do
-    nc -z -w 2 playstation.com $PORT >/dev/null 2>&1 && \
-      echo "✔ Port $PORT OK" || echo "✖ Port $PORT blocked"
-  done
+echo -e "\n[3] PSN Port Test"
+HOST="playstation.com"
 
-  echo -e "\n🌍 Public IP:"
-  curl -s ifconfig.me
-  echo ""
-  ;;
-
-5)
-  echo "Goodbye 👋"
-  exit 0
-  ;;
-
-*)
-  echo "Invalid option"
-  ;;
-```
-
-esac
-
-echo -e "\nPress Enter to continue..."
-read
-clear
+for PORT in 80 443 3478 3479 3480; do
+timeout 2 bash -c "echo > /dev/tcp/$HOST/$PORT" 2>/dev/null && 
+echo "✔ Port $PORT open" || 
+echo "✖ Port $PORT blocked"
 done
+
+# 4. Public IP
+
+echo -e "\n[4] Public IP"
+if check_cmd curl; then
+curl -s ifconfig.me && echo ""
+else
+echo "⚠ curl not installed"
+fi
+
+echo -e "\n====================="
+echo "Done."
